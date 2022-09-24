@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#128148;&#128148;&#128148;Hi~~ SUPER MARIO</title>
+    <link rel="shortcut icon" href="#" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&family=PT+Serif:wght@400;700&family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Titillium+Web:wght@200;300;400;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/swiper-bundle.min.css" />
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/swiper-bundle.min.js"></script>
+    <script src="js/greensock/gsap.min.js"></script>
+    <script src="js/greensock/CSSRulePlugin.min.js"></script>
+    <script src="js/imagesloaded.pkgd.min.js"></script>
+  </head>
+  <body>
+    <header id="header">
+      <h1 id="logo">
+        <img src="images/logo.png" alt="" />
+      </h1>
+      <nav id="gnb">
+        <ul>
+          <li data-json="data/sedan.json" class="selected"><a href="">SEDAN</a></li>
+          <li data-json="data/suv.json"><a href="">SUV</a></li>
+        </ul>
+      </nav>
+      <div class="util">
+        <a href="">NINTENDO MALL</a>
+        <a href=""><span class="material-icons">favorite_border</span></a>
+        <a href=""><span class="material-icons">search</span></a>
+      </div>
+    </header>
+    <main id="main">
+      <ul class="" id="itemList"></ul>
+      <nav id="menu">
+        <ul id="menuList">
+          <li><span></span></li>
+        </ul>
+      </nav>
+    </main>
+  </body>
+  <script>
+    //prettier-ignore
+    const itemList = $("#itemList");
+    const menuList = $("#menuList");
+    $("#gnb li").on("click", function () {
+      if ($(this).hasClass("selected")) {
+        return false;
+      }
+      const json = $(this).data("json");
+      $(this).addClass("selected").siblings().removeClass("selected");
+      loadJson(json);
+      return false;
+    });
+    const loadJson = function (src) {
+      $.ajax({ url: src }).done(function (response) {
+        const imgPath = response.imgPath;
+        const items = response.items;
+        const distanceZ = response.distanceZ;
+        const step = response.step;
+        const total = items.length;
+        let tempHtml = "";
+        let tempMenuHtml = "";
+        let tz = 0;
+        $.each(items, function (idx, item) {
+          if (idx === 0) {
+            tempMenuHtml += `<li class="on"><span>${item.title}</span></li>`;
+          } else {
+            tempMenuHtml += `<li><span>${item.title}</span></li>`;
+          }
+          tempHtml += `<li class="" style="background: ${item.bg}; transform:translateZ(${idx * -distanceZ}px) ; z-index:${total - idx}">
+              <div class="info">
+                <h2 class="title">${item.title}</h2>
+                <p class="desc">${item.desc}</p>
+                <a href="${item.link}" target="${item.target}">MORE</a>
+              </div>
+              <div class="img">
+                <img src="${imgPath + item.img}" alt="" />
+              </div>
+            </li>
+            `;
+        });
+        itemList.html(tempHtml);
+        menuList.html(tempMenuHtml);
+        itemList.imagesLoaded().always(function () {
+          $(window).off();
+          $(window).on("mousewheel", function (e) {
+            const sel = Math.round(tz / distanceZ);
+            $("#menuList li").eq(sel).addClass("on").siblings().removeClass("on");
+            const deltaY = e.originalEvent.deltaY;
+            if (deltaY > 0) {
+              tz += distanceZ / step;
+              if (tz > distanceZ * (total - 1)) {
+                tz = distanceZ * (total - 1);
+                return false;
+              }
+            } else {
+              tz -= distanceZ / step;
+              if (tz < 0) {
+                tz = 0;
+                return false;
+              }
+            }
+            $("#itemList li").each(function (idx, item) {
+              gsap.to(item, { z: tz + -distanceZ * idx });
+            });
+          });
+        });
+        $("#menuList li").on("click", function () {
+          $(this).addClass("on").siblings().removeClass("on");
+          tz = $(this).index() * distanceZ;
+          $("#itemList li").each(function (idx, item) {
+            gsap.to(item, { z: tz + -distanceZ * idx });
+          });
+        });
+      });
+    };
+    loadJson("data/sedan.json");
+  </script>
+</html>
